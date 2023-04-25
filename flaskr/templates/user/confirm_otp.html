@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+{% from "includes/_formhelpers.html" import render_field %}
+
+<h4>
+    <strong>
+        Please Enter Recived Otp
+    </strong>
+</h4>
+<hr>
+<form method=post>
+    <dl>
+      {{ render_field(form.phone_otp, class="form-control") }}
+    </dl>
+    <p><input type=submit value=Login>
+</form>
+
+<hr>
+<hr>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+{% endblock body %}

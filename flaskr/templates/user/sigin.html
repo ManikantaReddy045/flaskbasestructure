@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+{% from "includes/_formhelpers.html" import render_field %}
+
+<h4>
+    <strong>
+        Login
+    </strong>
+</h4>
+<hr>
+<form method=post>
+    <dl>
+      {{ render_field(form.name, class="form-control") }}
+      {{ render_field(form.password,class="form-control") }}
+    </dl>
+    <p><input type=submit value=Login>
+</form>
+
+<hr>
+
+<a href={{ url_for('user.register') }}>Dont Have account?Please Use This link To Register</a>
+
+<hr>
+
+<a href={{ url_for('user.otplogin') }}>Do you Forgot Your password? Please Use Otp Based Login</a>
+<hr>
+
+<a href={{ url_for('user.home') }}>Do you want to go Home page</a>
+
+<hr>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+{% endblock body %}
