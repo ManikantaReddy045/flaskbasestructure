@@ -1,11 +1,14 @@
 import os
-from . import auth, blog, views
+import json
+from . import auth, views
 import sentry_sdk
 from flask import Flask, render_template_string
 from sentry_sdk.integrations.flask import FlaskIntegration
 from flask_mail import *  
 from flaskr.email import mail
 from flask_security import SQLAlchemyUserDatastore, Security, auth_required
+from dotenv import load_dotenv
+
 
 def create_app(test_config=None):
     
@@ -21,7 +24,7 @@ def create_app(test_config=None):
 
 
     sentry_sdk.init(
-        dsn="https://2892a33d6f2b492fa984b4e0d4d011c0@o4504966018826240.ingest.sentry.io/4505012076478464",
+        dsn=os.getenv("dsn"),
         integrations=[
             FlaskIntegration(),
         ],
@@ -34,6 +37,7 @@ def create_app(test_config=None):
     from logging.config import dictConfig
 
 
+    load_dotenv()
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -48,28 +52,19 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-    app.config.update(
-
-        MAIL_DEFAULT_SENDER = "reddymani707@gmail.com",
-        MAIL_SERVER = "smtp.gmail.com",
-        MAIL_PORT = 465,
-        MAIL_USE_TLS = False,
-        MAIL_USE_SSL = True,
-        MAIL_DEBUG = False,
-        MAIL_USERNAME = "reddymani707@gmail.com",
-        MAIL_PASSWORD = "xonsywdpxauzmizc",
-    )
+    
+    
+    MAIL_SERVER = os.getenv('MAIL_SERVER'),
+    MAIL_PORT = os.getenv('MAIL_PORT'),
+    MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', default=False),
+    MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', default=True),
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME'),
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD'),
+    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER'),
     mail.init_app(app)
-    
-    
-    app.register_blueprint(auth.bp)
-    app.register_blueprint(views.bp)
 
-    app.config['SQLALCHEMY_DATABASE_URI'] ="postgresql://postgres:Mani%4012345@localhost:5432/flask"
+
+    app.config['SQLALCHEMY_DATABASE_URI'] =os.getenv("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
     from flaskr.models import db, User, Role
     from flask_migrate import Migrate
@@ -80,22 +75,25 @@ def create_app(test_config=None):
     'authenticator', 'sms']  # 'sms' also valid but requires an sms provider
     app.config['SECURITY_TWO_FACTOR'] = True
     app.config["SECURITY_TWO_FACTOR_REQUIRED"]=True
-    app.config['SECURITY_TWO_FACTOR_RESCUE_MAIL'] = "reddymani707@gmail.com"
-
+    rescue_email = os.getenv('SECURITY_TWO_FACTOR_RESCUE_MAIL')
+    app.config['SECURITY_TWO_FACTOR_RESCUE_MAIL'] = rescue_email
     app.config['SECURITY_TWO_FACTOR_ALWAYS_VALIDATE'] = False
     
-
     # Generate a good totp secret using: passlib.totp.generate_secret()
     app.config['SECURITY_TOTP_SECRETS'] = {"1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"}
     app.config['SECURITY_TOTP_ISSUER'] = "flaskr"
+    
 
    
-    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT")
+    # app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
+
 
     
     app.config["SECURITY_SMS_SERVICE"] = "Twilio"
-    app.config["SECURITY_SMS_SERVICE_CONFIG"] = {'ACCOUNT_SID':"AC58b95906d06caeb274aa775ef0eb090f", 'AUTH_TOKEN': "9bdfb75b3967b8ff5d300f66bd44f21e", 'PHONE_NUMBER': "+15677042726"}
+    security_config = os.getenv('SECURITY_SMS_SERVICE_CONFIG')
+    app.config['SECURITY_SMS_SERVICE_CONFIG'] = json.loads(security_config)
     app.config["SECURITY_CHANGE_PASSWORD_TEMPLATE"]=True
     app.config["SECURITY_EMAIL_SUBJECT_CONFIRM"]="Please confirm your email"
     app.config["SECURITY_AUTO_LOGIN_AFTER_CONFIRM"]=True
@@ -148,9 +146,9 @@ def create_app(test_config=None):
         division_by_zero = 1 / 0
 
 
-    if __name__ == "__main__":
-        port = int(os.environ.get('PORT', 5000))
-        app.run(debug=True, host='0.0.0.0', port=port)
+
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(views.bp)
 
     return app
 

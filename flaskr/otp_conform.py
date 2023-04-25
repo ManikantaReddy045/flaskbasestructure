@@ -16,9 +16,9 @@ def generate_code():
 
 
 def send_sms(phone_number, body):
-    account_sid = "AC58b95906d06caeb274aa775ef0eb090f",
-    auth_token = "9bdfb75b3967b8ff5d300f66bd44f21e",
-    twilio_number = "+15677042726",
+    account_sid = os.getenv("ACCOUNT_SID"),
+    auth_token = os.getenv("AUTH_TOKEN"),
+    twilio_number = os.getenv("PHONE_NUMBER"),
     client = Client(account_sid, auth_token)
     client.api.messages.create(phone_number,
                            from_=twilio_number,
